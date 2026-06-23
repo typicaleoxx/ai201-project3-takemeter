@@ -466,17 +466,6 @@ I used AI to help clean and pre-label batches of public comments. The AI suggest
 
 I used AI to help think through error patterns after evaluation. I compared those suggestions with the actual confusion matrix and kept only the patterns that made sense for this task. The main pattern was that comments mixing personal experience, recommendations, and short emotional reactions were difficult because they sat near the label boundaries.
 
-## Stretch Features Completed
-
-I completed two stretch features.
-
-| Stretch Feature        | Where It Is Shown                                 |
-| ---------------------- | ------------------------------------------------- |
-| Error Pattern Analysis | README Error Pattern Analysis section             |
-| Deployed Interface     | Gradio interface shown in demo video and notebook |
-
-These additions helped me evaluate and demonstrate the model beyond overall accuracy. The error pattern analysis identified the main systematic failure, and the Gradio interface made the classifier easier to test with new comments.
-
 ## Repository Structure
 
 ```text
