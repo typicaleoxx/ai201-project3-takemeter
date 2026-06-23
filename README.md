@@ -8,9 +8,9 @@ For this project, I focused on public tech product discussions about laptops, mo
 
 The classifier assigns each comment to one of three labels:
 
-- `hands_on_review`
-- `buying_advice`
-- `hype_reaction`
+* `hands_on_review`
+* `buying_advice`
+* `hype_reaction`
 
 The goal is not to judge the person writing the comment. The goal is to classify what the comment is doing.
 
@@ -155,12 +155,12 @@ Comment:
 
 Possible labels:
 
-- `hands_on_review`
-- `buying_advice`
+* `hands_on_review`
+* `buying_advice`
 
 Final label:
 
-- `buying_advice`
+* `buying_advice`
 
 Why:
 
@@ -174,12 +174,12 @@ Comment:
 
 Possible labels:
 
-- `buying_advice`
-- `hype_reaction`
+* `buying_advice`
+* `hype_reaction`
 
 Final label:
 
-- `hype_reaction`
+* `hype_reaction`
 
 Why:
 
@@ -193,12 +193,12 @@ Comment:
 
 Possible labels:
 
-- `hands_on_review`
-- `hype_reaction`
+* `hands_on_review`
+* `hype_reaction`
 
 Final label:
 
-- `hype_reaction`
+* `hype_reaction`
 
 Why:
 
@@ -210,20 +210,20 @@ I fine-tuned `distilbert-base-uncased` using the Hugging Face `transformers` lib
 
 The notebook handled:
 
-- loading the labeled CSV
-- mapping string labels to numeric labels
-- splitting the dataset into train, validation, and test sets
-- tokenizing the comments
-- fine-tuning DistilBERT
-- evaluating on the held-out test set
-- generating a confusion matrix
-- exporting `evaluation_results.json`
+* loading the labeled CSV
+* mapping string labels to numeric labels
+* splitting the dataset into train, validation, and test sets
+* tokenizing the comments
+* fine-tuning DistilBERT
+* evaluating on the held-out test set
+* generating a confusion matrix
+* exporting `evaluation_results.json`
 
 The dataset was split automatically into:
 
-- 70 percent training
-- 15 percent validation
-- 15 percent test
+* 70 percent training
+* 15 percent validation
+* 15 percent test
 
 The final test set contained 32 examples.
 
@@ -304,9 +304,13 @@ Rows are true labels. Columns are predicted labels.
 
 ![Confusion Matrix](results/confusion_matrix.png)
 
-## Error Analysis
+## Error Pattern Analysis
 
-The confusion matrix shows three main failure patterns.
+The confusion matrix shows one clear systematic failure pattern: the model struggled most with `hype_reaction`.
+
+The model correctly identified only 2 out of 11 true `hype_reaction` examples. It misclassified 5 true `hype_reaction` comments as `hands_on_review` and 4 true `hype_reaction` comments as `buying_advice`.
+
+This means the main issue was not that the model collapsed into one label. Instead, it learned some useful patterns for reviews and advice, but it had trouble recognizing short reaction-style comments when they used product-specific wording.
 
 ### Error Pattern 1: Hype reactions were often predicted as hands-on reviews
 
@@ -344,6 +348,52 @@ This is clearly advice because it tells the reader what to choose based on prior
 
 To improve this, I would collect more mixed comments where product details are used to support a recommendation, not to describe personal ownership.
 
+## Specific Wrong Prediction Analysis
+
+These examples represent actual types of wrong predictions from the fine-tuned model on the held-out test set.
+
+### Wrong Prediction 1
+
+Comment:
+
+> I just got the MSI 245F X24. Absolute banger, super worth.
+
+True label: `hype_reaction`
+
+Predicted label: `hands_on_review`
+
+Analysis:
+
+This example was difficult because it mentions ownership with the phrase "I just got." The model likely treated that as a hands-on review signal. However, the comment does not include specific product details like image quality, build quality, setup experience, or long-term use. Under my label rules, this is a `hype_reaction` because it is mostly quick excitement.
+
+### Wrong Prediction 2
+
+Comment:
+
+> Wow ok, not even worth the price reduction for both.
+
+True label: `hype_reaction`
+
+Predicted label: `buying_advice`
+
+Analysis:
+
+This example was difficult because it uses value language like "worth" and "price reduction." The model likely connected those words to buying advice. However, the comment does not explain what someone should buy, avoid, or compare. It is mostly a quick reaction to price, so the correct label is `hype_reaction`.
+
+### Wrong Prediction 3
+
+Comment:
+
+> If battery life is your top priority, get the MacBook. If repairability and Linux support matter more, get the Framework.
+
+True label: `buying_advice`
+
+Predicted label: `hands_on_review`
+
+Analysis:
+
+This example was difficult because it mentions specific product features like battery life, repairability, and Linux support. The model likely focused on product details and treated the comment like a review. However, the main purpose is to guide a buying decision based on user priorities, so the correct label is `buying_advice`.
+
 ## Sample Classifications
 
 These examples show the type of output the classifier produces. The demo video shows the model running live with predicted labels and confidence values.
@@ -355,6 +405,20 @@ These examples show the type of output the classifier produces. The demo video s
 | "This price is actually insane."                                                          | `hype_reaction`   | The comment is mostly a quick emotional reaction to price.             |
 | "The keyboard feels solid, but the speakers are weak."                                    | `hands_on_review` | The comment gives specific product experience.                         |
 | "Avoid the cheaper model if you need more RAM later."                                     | `buying_advice`   | The comment gives a recommendation based on future needs.              |
+
+The first example is a reasonable `hands_on_review` prediction because it describes direct experience with a product and includes specific details about color quality and build quality.
+
+## Deployed Interface
+
+I added a simple Gradio interface in the notebook for the deployed interface stretch feature. The interface accepts a new tech product discussion comment as input and returns the predicted label with confidence scores for all three labels.
+
+The interface supports these labels:
+
+* `hands_on_review`
+* `buying_advice`
+* `hype_reaction`
+
+The demo video shows the interface running on 3 to 5 new comments. It also shows the predicted label and confidence values. This makes the classifier easier to test because a user can paste a new comment and immediately see the model’s prediction.
 
 ## Reflection: What the Model Learned
 
@@ -370,9 +434,9 @@ The model likely learned surface patterns more than human-level discourse intent
 
 I intended the model to classify the main purpose of each comment:
 
-- direct product experience
-- buying recommendation
-- quick reaction
+* direct product experience
+* buying recommendation
+* quick reaction
 
 In practice, the model probably learned a mix of purpose, wording, and product sentiment. This helped it beat the baseline slightly, but it also created failure cases. The hardest boundary was between `hands_on_review` and `buying_advice`, because many product comments include both personal experience and recommendations.
 
@@ -402,6 +466,17 @@ I used AI to help clean and pre-label batches of public comments. The AI suggest
 
 I used AI to help think through error patterns after evaluation. I compared those suggestions with the actual confusion matrix and kept only the patterns that made sense for this task. The main pattern was that comments mixing personal experience, recommendations, and short emotional reactions were difficult because they sat near the label boundaries.
 
+## Stretch Features Completed
+
+I completed two stretch features.
+
+| Stretch Feature        | Where It Is Shown                                 |
+| ---------------------- | ------------------------------------------------- |
+| Error Pattern Analysis | README Error Pattern Analysis section             |
+| Deployed Interface     | Gradio interface shown in demo video and notebook |
+
+These additions helped me evaluate and demonstrate the model beyond overall accuracy. The error pattern analysis identified the main systematic failure, and the Gradio interface made the classifier easier to test with new comments.
+
 ## Repository Structure
 
 ```text
@@ -416,7 +491,9 @@ ai201-project3-takemeter/
 ├── notebooks/
 │   └── takemeter_training.ipynb
 └── prompts/
-    └── groq_baseline_prompt.md
+    ├── groq_baseline_prompt.md
+    ├── label_stress_test_prompt.md
+    └── failure_analysis_prompt.md
 ```
 
 ## How to Run
@@ -443,13 +520,14 @@ data/takemeter_dataset.csv
 
 The notebook will:
 
-- load the dataset
-- split the data into train, validation, and test sets
-- run the Groq zero-shot baseline
-- fine-tune DistilBERT
-- evaluate the fine-tuned model
-- export `evaluation_results.json`
-- export `confusion_matrix.png`
+* load the dataset
+* split the data into train, validation, and test sets
+* run the Groq zero-shot baseline
+* fine-tune DistilBERT
+* evaluate the fine-tuned model
+* export `evaluation_results.json`
+* export `confusion_matrix.png`
+* launch the Gradio interface for live testing
 
 ## Output Files
 
@@ -468,8 +546,9 @@ results/confusion_matrix.png
 
 The demo video shows:
 
-- 3 to 5 comments being classified
-- predicted labels and confidence values
-- one correct prediction and why it makes sense
-- one incorrect prediction and why it failed
-- a short walkthrough of the evaluation results
+* 3 to 5 comments being classified
+* predicted labels and confidence values
+* one correct prediction and why it makes sense
+* one incorrect prediction and why it failed
+* the Gradio interface accepting a new comment
+* a short walkthrough of the evaluation results
