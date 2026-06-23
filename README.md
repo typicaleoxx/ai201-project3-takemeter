@@ -533,7 +533,7 @@ results/confusion_matrix.png
 
 ## Demo Video
 
-The demo video shows:
+The demo video shows: https://drive.google.com/file/d/1FAU2xc3oZE3tmcPWN5kf-HakErHz8-Qe/view?usp=sharing
 
 * 3 to 5 comments being classified
 * predicted labels and confidence values
